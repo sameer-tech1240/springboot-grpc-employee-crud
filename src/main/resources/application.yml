@@ -1,0 +1,25 @@
+grpc:
+  server:
+    port: 9090
+    enable-reflection: true
+
+spring:
+  application:
+    name: gRPC-crud
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/gRPC_CRUD
+    username: root
+    password: root
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+server:
+  protocol: HTTP/2

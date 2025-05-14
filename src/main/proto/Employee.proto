@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.grpc.crud";
+option java_outer_classname = "EmployeeProto";
+
+/* Request message for creating or updating an employee */
+message EmployeeRequest {
+    string emp_name = 1;
+    string emp_email = 2;
+    string emp_address = 3;
+}
+
+/* Request message for Employee ID */
+message EmployeeIdRequest {
+    int64 id = 1;
+}
+
+/* Response message for Employee data */
+message EmployeeResponse {
+    int64 id = 1;
+    string emp_name = 2;
+    string emp_email = 3;
+    string emp_address = 4;
+}
+
+/* Response message for a list of employees */
+message EmployeeList {
+    repeated EmployeeResponse employees = 1;
+}
+
+/* Empty message (used for requests without body) */
+message Empty {}
+
+/* Response message for deletion confirmation */
+message DeleteEmployeeResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+/* Update request which contains ID + updated data */
+message UpdateEmployeeRequest {
+    int64 id = 1;
+    string emp_name = 2;
+    string emp_email = 3;
+    string emp_address = 4;
+}
+
+/* Service for employee CRUD operations */
+service EmployeeService {
+    /*  Create a new employee */
+    rpc CreateEmployee (EmployeeRequest) returns (EmployeeResponse);
+
+    /*  Get an employee by ID */
+    rpc GetEmployeeById (EmployeeIdRequest) returns (EmployeeResponse);
+
+    /* Get all employees */
+    rpc getAllEmployees (Empty) returns (EmployeeList);
+
+    /* Delete an employee by ID */
+    rpc deleteEmployeeById (EmployeeIdRequest) returns (DeleteEmployeeResponse);
+
+    /* Update an employee by ID */
+    rpc updateEmployeeById (UpdateEmployeeRequest) returns (EmployeeResponse);
+}
