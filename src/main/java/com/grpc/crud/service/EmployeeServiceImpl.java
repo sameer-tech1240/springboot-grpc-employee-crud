@@ -151,6 +151,7 @@ public class EmployeeServiceImpl extends EmployeeServiceGrpc.EmployeeServiceImpl
         }
     }
 
+
     @Override
     public void getAllEmployeesStream(Empty request, StreamObserver<EmployeeResponse> responseObserver) {
         List<EmployeeEntity> employee = employeeRepository.findAll();
@@ -176,7 +177,9 @@ public class EmployeeServiceImpl extends EmployeeServiceGrpc.EmployeeServiceImpl
 
     }
 
-    @Override
+
+    /* save employee with list */
+   /* @Override
     public void saveMultipleEmployees(EmployeeListRequest request, StreamObserver<UploadStatus> responseObserver) {
         List<EmployeeEntity> employeeList = request.getEmployeesList().stream().map(emp ->
                 EmployeeEntity.builder()
@@ -195,8 +198,43 @@ public class EmployeeServiceImpl extends EmployeeServiceGrpc.EmployeeServiceImpl
 
         responseObserver.onNext(status);
         responseObserver.onCompleted();
-    }
+    }*/
 
+
+    /* save employee one by one */
+    @Override
+    public StreamObserver<EmployeeRequest> saveMultipleEmployees(StreamObserver<UploadStatus> responseObserver) {
+        List<EmployeeEntity> savedEmployees = new ArrayList<>();
+
+        return new StreamObserver<>() {
+            @Override
+            public void onNext(EmployeeRequest request) {
+                EmployeeEntity emp = EmployeeEntity.builder()
+                        .emp_name(request.getEmpName())
+                        .emp_email(request.getEmpEmail())
+                        .emp_address(request.getEmpAddress())
+                        .build();
+                employeeRepository.save(emp);
+                savedEmployees.add(emp);
+            }
+
+            @Override
+            public void onCompleted() {
+                responseObserver.onNext(
+                        UploadStatus.newBuilder()
+                                .setSuccess(true)
+                                .setMessage(savedEmployees.size() + " Employees saved.")
+                                .build()
+                );
+                responseObserver.onCompleted();
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                responseObserver.onError(t);
+            }
+        };
+    }
 
     @Override
     public StreamObserver<EmployeeIdRequest> getEmployeeByIdStream(StreamObserver<EmployeeResponse> responseObserver) {
