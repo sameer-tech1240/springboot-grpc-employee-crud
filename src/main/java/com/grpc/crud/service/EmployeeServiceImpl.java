@@ -9,7 +9,9 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.grpc.server.service.GrpcService;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @GrpcService
 @RequiredArgsConstructor
@@ -148,4 +150,90 @@ public class EmployeeServiceImpl extends EmployeeServiceGrpc.EmployeeServiceImpl
             );
         }
     }
+
+    @Override
+    public void getAllEmployeesStream(Empty request, StreamObserver<EmployeeResponse> responseObserver) {
+        List<EmployeeEntity> employee = employeeRepository.findAll();
+        employee.forEach(emp -> {
+            EmployeeResponse response = EmployeeResponse.newBuilder()
+                    .setId(emp.getEmp_id())
+                    .setEmpName(emp.getEmp_name())
+                    .setEmpEmail(emp.getEmp_email())
+                    .setEmpAddress(emp.getEmp_address())
+                    .build();
+
+            responseObserver.onNext(response);
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                responseObserver.onError(e);
+                return;
+            }
+        });
+
+        responseObserver.onCompleted();
+
+    }
+
+    @Override
+    public void saveMultipleEmployees(EmployeeListRequest request, StreamObserver<UploadStatus> responseObserver) {
+        List<EmployeeEntity> employeeList = request.getEmployeesList().stream().map(emp ->
+                EmployeeEntity.builder()
+                        .emp_name(emp.getEmpName())
+                        .emp_email(emp.getEmpEmail())
+                        .emp_address(emp.getEmpAddress())
+                        .build()
+        ).toList();
+
+        employeeRepository.saveAll(employeeList);
+
+        UploadStatus status = UploadStatus.newBuilder()
+                .setSuccess(true)
+                .setMessage(employeeList.size() + " employees saved successfully using batch insert.")
+                .build();
+
+        responseObserver.onNext(status);
+        responseObserver.onCompleted();
+    }
+
+
+    @Override
+    public StreamObserver<EmployeeIdRequest> getEmployeeByIdStream(StreamObserver<EmployeeResponse> responseObserver) {
+        return new StreamObserver<EmployeeIdRequest>() {
+            @Override
+            public void onNext(EmployeeIdRequest request) {
+                // Fetch each employee by ID
+                employeeRepository.findById(request.getId()).ifPresentOrElse(emp -> {
+                    EmployeeResponse response = EmployeeResponse.newBuilder()
+                            .setId(emp.getEmp_id())
+                            .setEmpName(emp.getEmp_name())
+                            .setEmpEmail(emp.getEmp_email())
+                            .setEmpAddress(emp.getEmp_address())
+                            .build();
+                    responseObserver.onNext(response);
+                }, () -> {
+                    // Employee not found
+                    EmployeeResponse notFoundResponse = EmployeeResponse.newBuilder()
+                            .setId(request.getId())
+                            .setEmpName("Not Found")
+                            .setEmpEmail("N/A")
+                            .setEmpAddress("N/A")
+                            .build();
+                    responseObserver.onNext(notFoundResponse);
+                });
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                System.out.println("Client error: " + t.getMessage());
+            }
+
+            @Override
+            public void onCompleted() {
+                responseObserver.onCompleted();
+            }
+        };
+    }
+
 }

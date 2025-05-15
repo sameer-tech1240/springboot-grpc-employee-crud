@@ -46,6 +46,17 @@ message UpdateEmployeeRequest {
     string emp_address = 4;
 }
 
+/* Save multiple Employees */
+message EmployeeListRequest {
+    repeated EmployeeRequest employees = 1;
+}
+
+/* save multiple employee response */
+message UploadStatus {
+    bool success = 1;
+    string message = 2;
+}
+
 /* Service for employee CRUD operations */
 service EmployeeService {
     /*  Create a new employee */
@@ -62,4 +73,14 @@ service EmployeeService {
 
     /* Update an employee by ID */
     rpc updateEmployeeById (UpdateEmployeeRequest) returns (EmployeeResponse);
+
+    /* Server-Side Streaming */
+    rpc GetAllEmployeesStream (Empty) returns (stream EmployeeResponse);
+
+    /* Client side Streaming saveMultipleEmployees */
+    rpc SaveMultipleEmployees(EmployeeListRequest) returns (UploadStatus);
+
+    /*  Bidirectional Streaming */
+    rpc GetEmployeeByIdStream (stream EmployeeIdRequest) returns (stream EmployeeResponse);
+
 }
